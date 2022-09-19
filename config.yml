@@ -1,0 +1,15 @@
+debug: true
+telegram:
+  token: "5106669505:AAEyUDdLygB3p_GaLmKjMb6cT7rGmhJtV1o"
+  chat: 549765546
+
+server:
+  rate-limit:
+    enabled: true
+    tokens: 3
+    interval: 10s
+
+datasource:
+  user: sulgik
+  password: supersulgik
+  auto-migration: true

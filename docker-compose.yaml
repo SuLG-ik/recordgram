@@ -1,0 +1,14 @@
+version: "3"
+
+services:
+
+  network-db:
+    image: postgres:14.5-alpine
+    restart: "no"
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=sulgik
+      - POSTGRES_PASSWORD=supersulgik
+    command: ["postgres", n"-c" "log_connections=all"]
+    ports:
+      - "5432:5432"
