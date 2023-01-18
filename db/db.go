@@ -5,6 +5,7 @@ import (
 	logging "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"recordgram/companies"
 	"recordgram/config"
 	"recordgram/messages"
 	"recordgram/records"
@@ -16,7 +17,7 @@ func migrate(config config.Config, conn *gorm.DB) {
 		return
 	}
 	logging.Info("Database: automigrating")
-	err := conn.AutoMigrate(&messages.RecordToMessage{}, &records.OnlineRecord{})
+	err := conn.AutoMigrate(&messages.RecordToMessage{}, &records.OnlineRecord{}, &companies.Company{})
 	if err != nil {
 		logging.Panic(err)
 	}
@@ -54,6 +55,7 @@ func connect(config config.Config) *gorm.DB {
 	if err != nil {
 		logging.WithError(err).Panicf("Database: error connecting")
 	}
+
 	logging.Info("Database: connected")
 	return db
 }

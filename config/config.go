@@ -37,15 +37,18 @@ type Config struct {
 		AutoMigration bool   `yaml:"auto-migration"`
 	} `yaml:"datasource"`
 	Telegram struct {
-		Token  string `yaml:"token"`
-		ChatId int64  `yaml:"chat"`
+		Token string `yaml:"token"`
 	} `yaml:"telegram"`
+	Api struct {
+		KeyLength int `yaml:"key-length"`
+	} `yaml:"api"`
 }
 
 func newConfig(configPath string) Config {
 	// Create config structure
 	config := defaultConfig()
 	file, err := os.ReadFile(configPath)
+	fmt.Print(string(file))
 	if err != nil {
 		log.WithError(err).Warn("Config: reading error")
 		return config
@@ -109,7 +112,7 @@ func defaultConfig() Config {
 				Interval time.Duration `yaml:"interval"`
 			} `yaml:"rate-limit"`
 		}{
-			Host: "127.0.0.1",
+			Host: "",
 			Port: "8080",
 		},
 		Datasource: struct {
@@ -128,6 +131,11 @@ func defaultConfig() Config {
 			Password: "postgres",
 			Database: "postgres",
 			Timezone: "UTC",
+		},
+		Api: struct {
+			KeyLength int `yaml:"key-length"`
+		}{
+			KeyLength: 16,
 		},
 	}
 }

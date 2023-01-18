@@ -14,7 +14,15 @@ import (
 	"recordgram/config"
 )
 
+func CORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		next.ServeHTTP(w, r)
+	})
+}
 func setupServer(mux *chi.Mux, config config.Config, db *gorm.DB, bot *botapi.Bot) {
+	mux.Use(CORS)
 	mux.Use(middlewares.Recoverer)
 	mux.Use(middlewares.Logger)
 	setupRateLimit(mux, config)
@@ -24,7 +32,7 @@ func setupServer(mux *chi.Mux, config config.Config, db *gorm.DB, bot *botapi.Bo
 			Concise: true,
 		})))
 	}
-	mux.Route("/records", RecordsRouter(config, db, bot))
+	mux.Route("/records", RecordsRouter(db, bot))
 }
 
 func setupRateLimit(mux *chi.Mux, config config.Config) {
@@ -70,7 +78,7 @@ func NewServer(config config.Config, db *gorm.DB, bot *botapi.Bot) *Server {
 			} else {
 				err := http.ListenAndServe(config.Server.Host+":"+config.Server.Port, router)
 				if err != nil {
-					logging.WithError(err).Panic("Server: error")
+					logging.WithError(err).Panic("Server: er ror")
 				}
 			}
 		},

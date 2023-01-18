@@ -25,7 +25,7 @@ type Bot struct {
 	BotApi           *tgbotapi.BotAPI
 	messageHandlers  map[string]MessageHandlerFunc
 	callbackHandlers map[string]CallbackHandlerFunc
-	config           config.Config
+	Config           config.Config
 	started          atomic.Bool
 }
 
@@ -76,9 +76,9 @@ func NewBot(config config.Config) *Bot {
 	log.WithField("username", botApi.Self.UserName).Infof("TelegramBot: initialized")
 	bot := &Bot{
 		BotApi:           botApi,
+		Config:           config,
 		messageHandlers:  map[string]MessageHandlerFunc{},
 		callbackHandlers: map[string]CallbackHandlerFunc{},
-		config:           config,
 	}
 	return bot
 }
@@ -124,7 +124,7 @@ func NewBot(config config.Config) *Bot {
 //	return result
 //}
 
-func (bot *Bot) Start() {
+func (bot *Bot) Start(config config.Config) {
 	if bot.started.Load() {
 		log.Panicf("TelegramBot: already started. Starting canceled")
 	}
@@ -137,31 +137,31 @@ func (bot *Bot) Start() {
 
 	log.WithField("handlers", lo.Keys(bot.messageHandlers)).Debug("TelegramBot: started with handlers")
 	for update := range updates {
-		go produceUpdate(bot, update)
+		go produceUpdate(bot, update, config)
 	}
 }
 
-func produceUpdate(bot *Bot, update tgbotapi.Update) {
+func produceUpdate(bot *Bot, update tgbotapi.Update, config config.Config) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.WithFields(log.Fields{"err": err, "update": update.UpdateID}).Warnf("TelegramBot: error handling update")
 		}
 	}()
-	if produceMessage(bot, update) {
+	if produceMessage(bot, update, config) {
 		return
 	}
-	if produceCallback(bot, update) {
+	if produceCallback(bot, update, config) {
 		return
 	}
 
 	log.Warnf("TelegramBot: Update does not send to user %v", update.UpdateID)
 }
 
-func produceMessage(bot *Bot, update tgbotapi.Update) bool {
+func produceMessage(bot *Bot, update tgbotapi.Update, config config.Config) bool {
 	if update.Message != nil {
 		text := update.Message.Text
 		if strings.HasPrefix(text, "/") {
-			executeCommand(bot, update)
+			executeCommand(bot, update, config)
 			return true
 		}
 		_, err := bot.BotApi.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "/help - список команд"))
@@ -173,15 +173,15 @@ func produceMessage(bot *Bot, update tgbotapi.Update) bool {
 	return false
 }
 
-func produceCallback(bot *Bot, update tgbotapi.Update) bool {
+func produceCallback(bot *Bot, update tgbotapi.Update, config config.Config) bool {
 	if update.CallbackQuery != nil {
-		executeCallback(bot, update)
+		executeCallback(bot, update, config)
 		return true
 	}
 	return false
 }
 
-func executeCommand(bot *Bot, update tgbotapi.Update) {
+func executeCommand(bot *Bot, update tgbotapi.Update, config config.Config) {
 	command := update.Message.Command()
 	if len(command) == 0 {
 		_, _ = bot.BotApi.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "/help - список команд"))
@@ -193,15 +193,15 @@ func executeCommand(bot *Bot, update tgbotapi.Update) {
 				log.WithFields(log.Fields{"command": command, "chat_id": update.Message.Chat.ID, "message": update.Message.Text, "error": err}).Warnf("TelegramBot: error handling command")
 			}
 		}()
-		context := NewMessageContext(bot.BotApi, update, command)
+		context := NewMessageContext(bot.BotApi, update, command, config)
 		handler(&context)
 		return
 	}
 	_, _ = bot.BotApi.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "/help - список команд"))
 }
 
-func executeCallback(bot *Bot, update tgbotapi.Update) {
-	ctx := NewCallbackContext(bot.BotApi, update)
+func executeCallback(bot *Bot, update tgbotapi.Update, config config.Config) {
+	ctx := NewCallbackContext(bot.BotApi, update, config)
 	handler, ok := bot.callbackHandlers[ctx.Command()]
 	if ok {
 		defer func() {

@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"recordgram/botapi"
+	"recordgram/companies"
 	"recordgram/records"
 )
 
@@ -12,7 +13,15 @@ type ListCommand struct {
 }
 
 func (command ListCommand) Handler(ctx *botapi.MessageContext) {
-	onlineRecords, err := records.FindNonMarked(command.db)
+	company, err := companies.FindByChatId(command.db, ctx.ChatId)
+	if err != nil {
+		_, err := ctx.SendMessage("Компания не привязана")
+		if err != nil {
+			log.WithError(err).Error("ListCommandHandler: error sending message")
+		}
+		return
+	}
+	onlineRecords, err := records.FindNonMarked(command.db, company.Id)
 	if err != nil {
 		log.WithError(err).Error("ListCommandHandler: error fetching onlineRecords")
 	}
@@ -21,11 +30,11 @@ func (command ListCommand) Handler(ctx *botapi.MessageContext) {
 		if err != nil {
 			log.WithError(err).Error("ListCommandHandler: error sending message")
 		}
-	} else {
-		_, err := ctx.SendMessage("🗃 Список заявок:")
-		if err != nil {
-			log.WithError(err).Error("ListCommandHandler: error sending message")
-		}
+		return
+	}
+	_, err = ctx.SendMessage("🗃 Список заявок:")
+	if err != nil {
+		log.WithError(err).Error("ListCommandHandler: error sending message")
 	}
 	for _, record := range onlineRecords {
 		SendRecord(ctx.Bot, command.db, ctx.Update.Message.Chat.ID, record)

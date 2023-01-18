@@ -100,7 +100,6 @@ func EditMessages(message messages.RecordToMessage, text string, ctx *botapi.Cal
 	_, err := ctx.Bot.Send(tgbotapi.NewEditMessageText(message.ChatId, int(message.MessageId), text))
 	if err != nil {
 		log.WithError(err).Warnf("MarkAcceptHandler: error edit messages")
-		_, err = ctx.SendMessage("Ошибка обновления сообщений.")
 		if err != nil {
 			log.WithError(err).Warnf("MarkAcceptHandler: error sending message")
 			return
@@ -117,7 +116,12 @@ func prepareRecordStatus(record records.OnlineRecord) string {
 	} else {
 		status = "🔴 Статус: отклонено"
 	}
-	return fmt.Sprintf("📝Запись.\n%v\n💇 Имя: %v\n📲 Номер тeлeфона: +%v", status, record.Name, record.Phone)
+	message := record.Message
+	if message == "" {
+		message = "пусто"
+	}
+	time := fmt.Sprintf("%02d:%02d %02d.%02d.%d", record.Date.Hour(), record.Date.Minute(), record.Date.Day(), record.Date.Month(), record.Date.Year())
+	return fmt.Sprintf("📝Заявка от %v\n%v\n💇 Имя: %v\n📲 Номер тeлeфона: +%v\n📩 Сообшение: %v", time, status, record.Name, record.Phone, message)
 }
 
 func prepareRecordStatusMessage(chatId int64, record records.OnlineRecord) tgbotapi.MessageConfig {

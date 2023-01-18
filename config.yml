@@ -1,15 +1,17 @@
 debug: true
 telegram:
-  token: "5106669505:AAEyUDdLygB3p_GaLmKjMb6cT7rGmhJtV1o"
-  chat: 549765546
+  token: "5761561547:AAEylwfRgz_iGqYhSYElvjvJK4LR8qE0gVc"
 
 server:
+  host: ""
+  port: 8080
   rate-limit:
     enabled: true
     tokens: 3
     interval: 10s
 
 datasource:
+  host: localhost
   user: sulgik
   password: supersulgik
   auto-migration: true

@@ -3,6 +3,7 @@ package botapi
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"recordgram/config"
 	"strings"
 )
 
@@ -11,15 +12,17 @@ type CallbackHandlerFunc func(ctx *CallbackContext)
 type CallbackContext struct {
 	Update tgbotapi.Update
 	Bot    *tgbotapi.BotAPI
+	Config config.Config
 
 	payload *string
 	command *string
 }
 
-func NewCallbackContext(api *tgbotapi.BotAPI, update tgbotapi.Update) CallbackContext {
+func NewCallbackContext(api *tgbotapi.BotAPI, update tgbotapi.Update, config config.Config) CallbackContext {
 	return CallbackContext{
 		Update: update,
 		Bot:    api,
+		Config: config,
 	}
 }
 
